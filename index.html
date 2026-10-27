@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mount Cleverest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: alpine scoreboard — summit header, climber cards with token "peaks", question desk, then the expedition log */
+:root{
+  --bg:#eef3f6; --surface:#ffffff; --ink:#14232e; --muted:#5b6b77; --line:#d3dde4;
+  --accent:#1d6fa3; --accent-ink:#ffffff; --snow:#f7fafc;
+  --good:#2f8a57; --bad:#c2412d; --good-bg:#e3f3ea; --bad-bg:#fbe8e4; --gold:#c98a12;
+  --display:"Archivo Black","Arial Black",system-ui,sans-serif;
+  --body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1820; --surface:#16232d; --ink:#e6eef3; --muted:#93a4b0; --line:#2a3a46;
+  --accent:#5cb0e6; --accent-ink:#0b1620; --snow:#1b2a35;
+  --good:#5cc68a; --bad:#f07a63; --good-bg:#173527; --bad-bg:#3a1d18; --gold:#e8b44a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1820; --surface:#16232d; --ink:#e6eef3; --muted:#93a4b0; --line:#2a3a46;
+  --accent:#5cb0e6; --accent-ink:#0b1620; --snow:#1b2a35;
+  --good:#5cc68a; --bad:#f07a63; --good-bg:#173527; --bad-bg:#3a1d18; --gold:#e8b44a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:24px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header svg{width:56px;height:40px;flex:none}
+h1{font-family:var(--display);font-size:clamp(1.6rem,5vw,2.3rem);line-height:1;margin:0;letter-spacing:.01em}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.95rem}
+h2{font-family:var(--display);font-size:1.15rem;margin:0;letter-spacing:.02em}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px;min-width:0}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 14px;font-weight:600}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:transparent}
+button.danger{color:var(--bad);border-color:var(--bad)}
+input,textarea{font:inherit;color:var(--ink);background:var(--snow);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:64px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+
+/* setup */
+.names{display:grid;gap:8px}
+.name-row{display:flex;gap:8px;align-items:center}
+.name-row .num{font-family:var(--mono);color:var(--muted);width:2ch;text-align:right;flex:none}
+.name-row button{padding:8px 12px;flex:none}
+.calc{font-family:var(--mono);font-size:1rem;background:var(--snow);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.calc b{font-size:1.4rem;color:var(--accent)}
+.calc input{width:5.5em;font-family:var(--mono);padding:6px 8px}
+
+/* climbers */
+.climbers{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.climber{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px;text-align:left;font-weight:400}
+.climber.up{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.climber.out{opacity:.5}
+.climber.win{border-color:var(--gold)}
+.climber .top{display:flex;align-items:baseline;gap:8px}
+.climber .nm{font-weight:700;font-size:1.05rem;overflow-wrap:anywhere;flex:1;min-width:0}
+.climber .ct{font-family:var(--mono);font-weight:700;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.climber .st{font-size:.8rem;color:var(--muted)}
+.climber.up .st{color:var(--accent);font-weight:600}
+.pips{display:flex;flex-wrap:wrap;gap:3px}
+.pip{width:12px;height:10px;clip-path:polygon(50% 0,100% 100%,0 100%);background:var(--accent)}
+.pip.lost{background:var(--line)}
+
+/* question desk */
+.who{font-family:var(--display);font-size:1.6rem;line-height:1.1;overflow-wrap:anywhere}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tf button{padding:12px;font-size:1rem}
+.tf button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.qgrid>div{display:grid;gap:6px;min-width:0}
+@media (max-width:560px){.qgrid{grid-template-columns:1fr}}
+.verdict{font-weight:700;border-radius:8px;padding:10px 12px}
+.verdict.ok{background:var(--good-bg);color:var(--good)}
+.verdict.miss{background:var(--bad-bg);color:var(--bad)}
+
+/* winner */
+.summit{background:var(--surface);border:2px solid var(--gold);border-radius:12px;padding:24px;display:grid;gap:8px;text-align:center;justify-items:center}
+.summit .who{font-size:clamp(1.8rem,7vw,2.8rem)}
+.summit svg{width:80px;height:56px}
+
+/* log */
+.logwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;white-space:nowrap}
+td.n,td.t{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.q{min-width:200px}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--good-bg);color:var(--good)}
+.tag.miss{background:var(--bad-bg);color:var(--bad)}
+.empty{color:var(--muted);font-size:.95rem}
+.confirm{background:var(--bad-bg);border-radius:8px;padding:10px 12px}
+@media (prefers-reduced-motion:no-preference){.climber{transition:border-color .2s,opacity .3s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 56 40" aria-hidden="true"><path d="M2 38 L20 10 L28 22 L36 4 L54 38 Z" fill="var(--accent)"/><path d="M36 4 L41 13 L38 12 L35 15 L32 11 Z" fill="var(--snow)" stroke="var(--line)" stroke-width=".5"/><path d="M36 4 V-2" stroke="var(--ink)" stroke-width="1.5"/><path d="M36 -2 L44 1 L36 3 Z" fill="var(--bad)"/></svg>
+    <div>
+      <h1>Mount Cleverest</h1>
+      <p class="sub">True-or-false trivia. Miss a question, lose a token. Last climber with tokens wins.</p>
+    </div>
+  </header>
+
+  <!-- SETUP -->
+  <section id="setup" class="panel">
+    <div class="row"><h2>Climbers</h2><span class="spacer"></span><span class="label" id="countLabel"></span></div>
+    <div class="names" id="names"></div>
+    <div class="row">
+      <button id="addBtn" type="button">+ Add player</button>
+    </div>
+    <div class="calc" id="calc"></div>
+    <div class="row">
+      <span class="spacer"></span>
+      <button class="primary" id="startBtn" type="button">Start the climb</button>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section id="play" hidden style="display:grid;gap:24px">
+    <div id="summit" class="summit" hidden></div>
+    <div class="climbers" id="climbers"></div>
+
+    <div class="panel" id="desk">
+      <div class="row">
+        <div style="display:grid;gap:2px;min-width:0">
+          <span class="label">Question <span id="qnum"></span> · up now</span>
+          <div class="who" id="who"></div>
+        </div>
+      </div>
+      <div style="display:grid;gap:6px">
+        <label class="label" for="qtext">Question asked</label>
+        <textarea id="qtext" placeholder="e.g. Mount Everest is in Nepal and Tibet."></textarea>
+      </div>
+      <div class="qgrid">
+        <div>
+          <span class="label">Their response</span>
+          <div class="tf" id="respTF"><button type="button" data-v="T" aria-pressed="false">True</button><button type="button" data-v="F" aria-pressed="false">False</button></div>
+        </div>
+        <div>
+          <span class="label">Correct answer</span>
+          <div class="tf" id="corrTF"><button type="button" data-v="T" aria-pressed="false">True</button><button type="button" data-v="F" aria-pressed="false">False</button></div>
+        </div>
+      </div>
+      <div id="preview"></div>
+      <div class="row">
+        <span class="empty" style="font-size:.85rem">Tap a climber card to change who answers.</span>
+        <span class="spacer"></span>
+        <button class="primary" id="recordBtn" type="button" disabled>Record answer</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <h2>Expedition log</h2><span class="spacer"></span>
+        <button class="ghost" id="undoBtn" type="button">Undo last</button>
+        <button class="ghost danger" id="newBtn" type="button">New game</button>
+      </div>
+      <div id="confirmNew" class="confirm row" hidden>
+        <span>End this game and start over? The log will be cleared.</span><span class="spacer"></span>
+        <button type="button" id="cancelNew">Keep playing</button>
+        <button type="button" class="danger" id="yesNew">Start over</button>
+      </div>
+      <div class="logwrap" id="log"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const KEY='mount-cleverest-v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TF={T:'True',F:'False'};
+
+let S;
+function fresh(){return {phase:'setup',names:['Andy','Player 2','Player 3','Player 4'],override:null,start:0,players:[],log:[],turn:0,resp:null,corr:null,q:''};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.phase)return v}catch(e){}return null}
+
+function autoTokens(n){return n>0?Math.floor(30/n):0}
+function startTokens(){const n=cleanNames().length;return S.override&&S.override>0?S.override:autoTokens(n)}
+function cleanNames(){return S.names.map(s=>s.trim()).filter(Boolean)}
+function alive(){return S.players.filter(p=>p.tokens>0)}
+function nextAlive(from){const n=S.players.length;for(let k=1;k<=n;k++){const i=(from+k)%n;if(S.players[i].tokens>0)return i}return from}
+
+/* ---------- setup ---------- */
+function renderSetup(){
+  const box=$('names');
+  box.innerHTML=S.names.map((n,i)=>`<div class="name-row"><span class="num">${i+1}</span><input id="pn${i}" data-i="${i}" value="${esc(n)}" placeholder="Player name" aria-label="Player ${i+1} name"><button type="button" data-rm="${i}" aria-label="Remove player ${i+1}" ${S.names.length<=2?'disabled':''}>✕</button></div>`).join('');
+  renderCalc();
+}
+function renderCalc(){
+  const n=cleanNames().length, auto=autoTokens(n);
+  $('countLabel').textContent=n+' player'+(n===1?'':'s');
+  const exact=n?(30/n):0;
+  const shown=exact%1?exact.toFixed(2).replace(/0$/,''):exact;
+  $('calc').innerHTML=n<2?`<span>Add at least two players to start.</span>`:
+    `<span>30 ÷ ${n} = ${shown}${exact%1?' → rounded down':''}</span><span>Starting tokens each: <b id="tokShow">${startTokens()}</b></span>
+     <label class="row" style="gap:6px;font-family:var(--body);font-size:.9rem;color:var(--muted)" for="ovr">Override<input id="ovr" type="number" min="1" max="99" inputmode="numeric" placeholder="${auto}" value="${S.override||''}"></label>`;
+  $('startBtn').disabled=n<2;
+}
+$('names').addEventListener('input',e=>{const i=e.target.dataset.i;if(i==null)return;S.names[+i]=e.target.value;renderCalc();save()});
+$('names').addEventListener('click',e=>{const i=e.target.dataset.rm;if(i==null)return;S.names.splice(+i,1);renderSetup();save()});
+$('calc').addEventListener('input',e=>{if(e.target.id!=='ovr')return;const v=parseInt(e.target.value,10);S.override=v>0?v:null;const t=$('tokShow');if(t)t.textContent=startTokens();save()});
+$('addBtn').onclick=()=>{if(S.names.length>=30)return;S.names.push('');renderSetup();const last=$('pn'+(S.names.length-1));last&&last.focus();save()};
+$('startBtn').onclick=()=>{
+  const names=cleanNames();if(names.length<2)return;
+  S.start=startTokens();
+  S.players=names.map(name=>({name,tokens:S.start}));
+  S.log=[];S.turn=0;S.resp=S.corr=null;S.q='';S.phase='play';
+  save();render();
+};
+
+/* ---------- play ---------- */
+function renderPlay(){
+  const done=S.phase==='done';
+  const winner=done?alive()[0]:null;
+  $('climbers').innerHTML=S.players.map((p,i)=>{
+    const out=p.tokens<=0, up=!done&&i===S.turn, win=winner&&winner===p;
+    const pips=Array.from({length:S.start},(_,k)=>`<span class="pip${k>=p.tokens?' lost':''}"></span>`).join('');
+    const st=win?'Reached the summit':out?'Out of tokens':up?'Answering now':'Climbing';
+    return `<button type="button" class="climber${up?' up':''}${out?' out':''}${win?' win':''}" data-p="${i}" ${out||done?'disabled':''} aria-label="${esc(p.name)}, ${p.tokens} tokens">
+      <span class="top"><span class="nm">${esc(p.name)}</span><span class="ct">${p.tokens}</span></span>
+      <span class="pips" aria-hidden="true">${pips}</span><span class="st">${st}</span></button>`;
+  }).join('');
+
+  const sm=$('summit');
+  if(winner){
+    sm.hidden=false;
+    sm.innerHTML=`<svg viewBox="0 0 80 56" aria-hidden="true"><path d="M2 54 L40 6 L78 54 Z" fill="var(--accent)"/><path d="M40 6 L48 17 L43 15 L40 19 L36 15 L32 17 Z" fill="var(--snow)"/><path d="M40 6 V-6" stroke="var(--ink)" stroke-width="2"/><path d="M40 -6 L54 -1 L40 3 Z" fill="var(--gold)"/></svg>
+      <span class="label">Summit reached</span><div class="who">${esc(winner.name)} wins!</div>
+      <span class="empty">${winner.tokens} token${winner.tokens===1?'':'s'} left after ${S.log.length} questions.</span>
+      <button class="primary" type="button" id="againBtn">Play again with same climbers</button>`;
+    $('againBtn').onclick=()=>{S.names=S.players.map(p=>p.name);S.phase='setup';S.players=[];S.log=[];save();render()};
+  } else sm.hidden=true;
+
+  $('desk').hidden=done;
+  if(!done){
+    $('who').textContent=S.players[S.turn].name;
+    $('qnum').textContent='#'+(S.log.length+1);
+    if($('qtext').value!==S.q)$('qtext').value=S.q;
+    setTF('respTF',S.resp);setTF('corrTF',S.corr);
+    const ready=S.resp&&S.corr;
+    $('recordBtn').disabled=!ready;
+    const p=S.players[S.turn];
+    $('preview').innerHTML=ready?(S.resp===S.corr?
+      `<div class="verdict ok">Correct. ${esc(p.name)} keeps ${p.tokens} token${p.tokens===1?'':'s'}.</div>`:
+      `<div class="verdict miss">Miss. ${esc(p.name)} drops to ${p.tokens-1} token${p.tokens-1===1?'':'s'}${p.tokens-1===0?' and is out':''}.</div>`):'';
+  }
+  renderLog();
+  $('undoBtn').disabled=!S.log.length;
+}
+function setTF(id,v){$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)))}
+$('respTF').onclick=e=>{const v=e.target.dataset&&e.target.dataset.v;if(!v)return;S.resp=v;save();renderPlay()};
+$('corrTF').onclick=e=>{const v=e.target.dataset&&e.target.dataset.v;if(!v)return;S.corr=v;save();renderPlay()};
+$('qtext').addEventListener('input',e=>{S.q=e.target.value;save()});
+$('climbers').addEventListener('click',e=>{const c=e.target.closest('[data-p]');if(!c||c.disabled)return;S.turn=+c.dataset.p;save();renderPlay()});
+
+$('recordBtn').onclick=()=>{
+  if(!S.resp||!S.corr)return;
+  const p=S.players[S.turn], miss=S.resp!==S.corr;
+  if(miss)p.tokens-=1;
+  S.log.push({n:S.log.length+1,pi:S.turn,name:p.name,q:S.q.trim(),resp:S.resp,corr:S.corr,miss,left:p.tokens});
+  S.q='';S.resp=S.corr=null;
+  if(alive().length<=1)S.phase='done';
+  else S.turn=nextAlive(S.turn);
+  save();renderPlay();
+  if(S.phase!=='done')$('qtext').focus();
+};
+$('undoBtn').onclick=()=>{
+  const last=S.log.pop();if(!last)return;
+  if(last.miss)S.players[last.pi].tokens+=1;
+  S.turn=last.pi;S.q=last.q;S.resp=last.resp;S.corr=last.corr;S.phase='play';
+  save();renderPlay();
+};
+$('newBtn').onclick=()=>{$('confirmNew').hidden=false};
+$('cancelNew').onclick=()=>{$('confirmNew').hidden=true};
+$('yesNew').onclick=()=>{const names=S.players.map(p=>p.name);S=fresh();if(names.length)S.names=names;$('confirmNew').hidden=true;save();render()};
+
+function renderLog(){
+  if(!S.log.length){$('log').innerHTML='<p class="empty">No questions yet. Each answer you record shows up here.</p>';return}
+  $('log').innerHTML=`<table><thead><tr><th>#</th><th>Player</th><th>Question</th><th>Response</th><th>Answer</th><th>Result</th><th>Tokens left</th></tr></thead><tbody>${
+    S.log.slice().reverse().map(r=>`<tr><td class="n">${r.n}</td><td>${esc(r.name)}</td><td class="q">${r.q?esc(r.q):'<span class="empty">(not entered)</span>'}</td><td>${TF[r.resp]}</td><td>${TF[r.corr]}</td><td><span class="tag ${r.miss?'miss':'ok'}">${r.miss?'Miss −1':'Correct'}</span></td><td class="t">${r.left}${r.left===0?' · out':''}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+function render(){
+  const setup=S.phase==='setup';
+  $('setup').hidden=!setup;$('play').hidden=setup;
+  if(setup)renderSetup();else renderPlay();
+}
+
+function start(data){
+  S=(data&&data.phase)?data:(load()||fresh());
+  render();
+}
+window.claude?.hot?.snapshot?.(()=>S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+})();
+</script>
+</body>
+</html>
